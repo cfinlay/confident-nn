@@ -28,7 +28,9 @@ parser.add_argument('--save-path', type=str, default=None)
 def main():
     args = parser.parse_args()
     if args.save_path is None:
-        args.save_path = os.path.join('./logs/imagenet/',args.model, 'eval_'+args.mode+'.pkl')
+        args.save_path = os.path.join('./logs/imagenet/',args.model, 'eval.pkl')
+    pth = os.path.split(args.save_path)[0]
+    os.makedirs(pth, exist_ok=True)
 
     print('Arguments:')
     for p in vars(args).items():
