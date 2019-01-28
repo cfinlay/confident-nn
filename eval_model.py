@@ -107,7 +107,6 @@ def main():
     GradFunc0 = GradNorms(2,retain_graph=True)
     GradFunc1 = GradNorms(2,retain_graph=False)
 
-    # Criteria 
     criterion = nn.CrossEntropyLoss(reduction='none').cuda()
 
     Loss = torch.zeros(Nsamples).cuda()
@@ -115,9 +114,9 @@ def main():
     Top5 = torch.zeros(Nsamples,dtype=torch.uint8).cuda()
     LossGradx = torch.zeros(Nsamples).cuda()
     ModelSqGradx = torch.zeros(Nsamples).cuda()
+    ModelSqGradw = torch.zeros(Nsamples).cuda()
     LossGradw = torch.zeros(Nsamples).cuda()
     LossGrady = torch.zeros(Nsamples).cuda()
-    #ModelJac = torch.zeros(Nsamples)
 
 
 
@@ -137,7 +136,6 @@ def main():
         gx = GradFunc0(loss.sum(), x)
         dpn = GradFunc1(pnorm.sum(),x)
         gy = (-yhat.softmax(dim=-1).log()).norm(dim=-1)
-        #Jx = JacFunc(x, yhat.softmax(dim=-1))
 
 
         top1 = torch.argmax(yhat,dim=-1)==y
@@ -152,7 +150,6 @@ def main():
         LossGradx[ix] = gx.detach()
         ModelSqGradx[ix] = dpn.detach()
         LossGrady[ix] = gy.detach()
-        #ModelJac[ix] = Jx.detach()
     sys.stdout.write('   Completed [%6.2f%%]\r'%(100.))
 
     loader1 = torch.utils.data.DataLoader(
@@ -189,6 +186,17 @@ def main():
         gw = gwsq.sqrt()
         LossGradw[i] = gw
 
+        yhat = m(x)
+        pnorm = yhat.softmax(dim=-1).norm(dim=-1)
+        pnorm.backward()
+        gwsq = 0.
+        for p in m.parameters():
+            gwsq += p.grad.view(-1).pow(2).sum()
+            p.grad.detach_()
+            p.grad.zero_()
+        gw = gwsq.sqrt()
+        ModelSqGradw[i] = gw
+
     sys.stdout.write('   Completed [%6.2f%%]\r'%(100.))
     sys.stdout.write('\n   Done')
     sys.stdout.flush()
@@ -198,6 +206,7 @@ def main():
                        'top5':np.array(Top5.cpu().numpy(), dtype=np.bool),
                        'gradx_loss_2norm': LossGradx.cpu().numpy(),
                        'gradx_modelsq_2norm': ModelSqGradx.cpu().numpy(),
+                       'gradw_modelsq_2norm': ModelSqGradw.cpu().numpy(),
                        'gradw_loss_2norm': LossGradw.cpu().numpy(),
                        'grady_loss_2norm': LossGrady.cpu().numpy()})
 
