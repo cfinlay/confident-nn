@@ -117,6 +117,8 @@ def main():
     ModelSqGradw = torch.zeros(Nsamples).cuda()
     LossGradw = torch.zeros(Nsamples).cuda()
     LossGrady = torch.zeros(Nsamples).cuda()
+    LossTop5Grady = torch.zeros(Nsamples).cuda()
+    LossTop1Grady = torch.zeros(Nsamples).cuda()
 
 
 
@@ -130,13 +132,18 @@ def main():
         x.requires_grad_(True)
 
         yhat = m(x)
-        pnorm = yhat.softmax(dim=-1).norm(dim=-1)
+        p = yhat.softmax(dim=-1)
+        pnorm = p.norm(dim=-1)
         loss = criterion(yhat, y)
 
         gx = GradFunc0(loss.sum(), x)
         dpn = GradFunc1(pnorm.sum(),x)
         gy = (-yhat.softmax(dim=-1).log()).norm(dim=-1)
 
+        t5 = p.topk(5,dim=-1)[0]
+        t1 = t5[:,0]
+        gt5y = (-t5.log()).norm(dim=-1)
+        gt1y = (-t1.log())
 
         top1 = torch.argmax(yhat,dim=-1)==y
         s = yhat.sort(dim=-1, descending=True)[1]
@@ -150,6 +157,8 @@ def main():
         LossGradx[ix] = gx.detach()
         ModelSqGradx[ix] = dpn.detach()
         LossGrady[ix] = gy.detach()
+        LossTop5Grady[ix] = gt5y.detach()
+        LossTop1Grady[ix] = gt1y.detach()
     sys.stdout.write('   Completed [%6.2f%%]\r'%(100.))
 
     loader1 = torch.utils.data.DataLoader(
@@ -204,12 +213,23 @@ def main():
     df = pd.DataFrame({'loss':Loss.cpu().numpy(),
                        'top1':np.array(Top1.cpu().numpy(),dtype=np.bool),
                        'top5':np.array(Top5.cpu().numpy(), dtype=np.bool),
+                       'grady_top5_loss_2norm' : LossTop5Grady.cpu().numpy(),
+                       'grady_top1_loss_2norm' : LossTop1Grady.cpu().numpy(),
                        'gradx_loss_2norm': LossGradx.cpu().numpy(),
                        'gradx_modelsq_2norm': ModelSqGradx.cpu().numpy(),
                        'gradw_modelsq_2norm': ModelSqGradw.cpu().numpy(),
                        'gradw_loss_2norm': LossGradw.cpu().numpy(),
                        'grady_loss_2norm': LossGrady.cpu().numpy()})
 
+    ix1 = np.array(df['top1'], dtype=bool)
+    ix5 = np.array(df['top5'], dtype=bool)
+    ix15 = np.logical_or(ix5,ix1)
+    ixw = np.logical_not(np.logical_or(ix1, ix5))
+
+    df['type'] = pd.DataFrame(ix1.astype(np.int8) + ix5.astype(np.int8))
+    d = {0:'mis-classified',1:'top5',2:'top1'}
+    df['type'] = df['type'].map(d)
+    df['type'] = df['type'].astype('category')
 
     df.to_pickle(args.save_path)
 
