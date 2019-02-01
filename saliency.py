@@ -92,16 +92,19 @@ for i, (x,y) in enumerate(loader):
         Gradients = torch.full((args.num_images, *imshape),np.nan)
         Images = torch.full((args.num_images, *imshape),np.nan)
         Labels = torch.full((args.num_images,),-1,dtype=torch.long)
+        Predictions = torch.full((args.num_images,),-1,dtype=torch.long)
         if has_cuda:
             Gradients = Gradients.cuda()
             Images = Images.cuda()
             Labels = Labels.cuda()
+            Predictions = Predictions.cuda()
 
     if has_cuda:
         x, y = x.cuda(), y.cuda()
 
     x = x.requires_grad_(True)
     yhat = model(x)
+    pred = yhat.argmax(dim=-1)
 
     loss = criterion(yhat, y)
     dx = grad(loss, x)[0]
@@ -110,15 +113,17 @@ for i, (x,y) in enumerate(loader):
     Images[Ix] = x.detach()
     Gradients[Ix] = dx.detach()
     Labels[Ix] = y.detach()
+    Predictions[Ix] = pred.detach()
 
 
 if args.save_images:
     P = Images.cpu().numpy()
     O = Gradients.cpu().numpy()
     L = Labels.cpu().numpy()
+    Pr = Predictions.cpu().numpy()
 
     with open(os.path.join(pth, 'saliency.pkl'),'wb') as f:
-        pk.dump({'images':P, 'gradients':O, 'labels':L,
+        pk.dump({'images':P, 'gradients':O, 'labels':L,'predictions':Pr,
             'indices':np.array(args.indices,dtype=np.int64)}, f)
 
 #if __name__=="__main__":
