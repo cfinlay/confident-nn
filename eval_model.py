@@ -24,15 +24,15 @@ parser.add_argument('--data-dir', type=str,
 parser.add_argument('--batch-size', type=int, default=100,metavar='N',
         help='number of images to evaluate at a time')
 parser.add_argument('--mode', type=str,default='val', choices=['val'])
-parser.add_argument('--image-path', type=str, default=None)
+parser.add_argument('--attack-path', type=str, default=None)
 parser.add_argument('--seed', type=int, default=0.)
 
 #def main():
 args = parser.parse_args()
-if args.image_path is None:
+if args.attack_path is None:
     args.save_path = os.path.join('./logs/imagenet/',args.model, 'eval.pkl')
 else:
-    d, f = os.path.split(args.image_path)
+    d, f = os.path.split(args.attack_path)
     name = os.path.splitext(f)[0]
     args.save_path = os.path.join(d, name+'-eval.pkl')
 
@@ -49,7 +49,7 @@ has_cuda = torch.cuda.is_available()
 # Data loading code
 normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
                                  std=[0.229, 0.224, 0.225])
-if args.image_path is None:
+if args.attack_path is None:
     traindir = os.path.join(args.data_dir, 'train')
     valdir = os.path.join(args.data_dir, 'val')
 
@@ -65,7 +65,7 @@ if args.image_path is None:
                         batch_size=args.batch_size, shuffle=False,
                         num_workers=4, pin_memory=True)
 else:
-    with open(args.image_path,'rb') as f:
+    with open(args.attack_path,'rb') as f:
         dct = pk.load(f)
     x = dct['perturbed']
     y = dct['labels']
@@ -185,7 +185,7 @@ for i, (x,y) in enumerate(loader):
     LogP5Diff[ix] = logp5diff.detach()
 sys.stdout.write('   Completed [%6.2f%%]\r'%(100.))
 
-if args.image_path is None:
+if args.attack_path is None:
     loader1 = torch.utils.data.DataLoader(
                         datasets.ImageFolder(valdir, transforms.Compose([
                                                 transforms.Resize(256),
