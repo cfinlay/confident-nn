@@ -6,7 +6,7 @@ import seaborn as sns
 import argparse
 
 
-parser = argparse.ArgumentParser('Generate a scatter plot')
+parser = argparse.ArgumentParser('Generate a frequency histogram')
 
 parser.add_argument('--file', type=str,
         default='logs/imagenet/resnet152/eval.pkl',metavar='F', 
@@ -22,7 +22,9 @@ parser.add_argument('--save', action='store_true', dest='save')
 parser.add_argument('--no-save', action='store_false',dest='save')
 parser.add_argument('--leg', action='store_true', dest='leg')
 parser.add_argument('--no-leg', action='store_false',dest='leg')
-parser.add_argument('--ylim', type=float, default=0.2)
+parser.add_argument('--name', type=str, default='frequency.pdf')
+parser.add_argument('--xlim', type=float, default=None, nargs='*')
+parser.add_argument('--ylim', type=float, nargs='*', default=(0,0.2))
 parser.set_defaults(show=True)
 parser.set_defaults(save=False)
 parser.set_defaults(leg=False)
@@ -55,9 +57,14 @@ fig, ax = plt.subplots(1, figsize=figsz)
 
 X = df[args.xvar]
 
-xmin = max(0.9*X.min(), 1e-6)
-xmax = 1.5*X.max()
-scxlim = (xmin, xmax)
+if args.xlim is None:
+    xmin = max(0.9*X.min(), 1e-6)
+    xmax = 1.5*X.max()
+    scxlim = (xmin, xmax)
+else:
+    scxlim = tuple(args.xlim)
+
+scylim = tuple(args.ylim)
 
 X = df[args.xvar]
 ix1 = np.array(df['top1'], dtype=bool)
@@ -76,7 +83,7 @@ ax.grid()
 ax.set_axisbelow(True)
 ax.set_xscale('log',nonposx='clip')
 ax.set_xlim(scxlim)
-ax.set_ylim((0,args.ylim))
+ax.set_ylim(scylim)
 
 if args.leg:
     ax.legend(loc='best')
@@ -91,5 +98,5 @@ if show:
     
 if args.save:
     pth = os.path.split(args.file)[0]
-    fig.savefig(os.path.join(pth,'frequency.pdf'),
+    fig.savefig(os.path.join(pth,args.name),
             format='pdf',bbox_inches='tight',dpi=dpi)

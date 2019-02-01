@@ -9,14 +9,10 @@ parser = argparse.ArgumentParser('Generate a scatter plot')
 parser.add_argument('--file', type=str,
         default='logs/imagenet/resnet152/eval.pkl',metavar='F', 
         help='Location where pkl file saved')
-parser.add_argument('--fig-size', type=float, default=6,
-        help='Figure size (inches)')
 parser.add_argument('--xvar', type=str, default='gradx_modelsq_2norm')
-parser.add_argument('--p', type=float, default=0.05)
+#parser.add_argument('--c', type=float, required=True)
 
 args = parser.parse_args()
-p = args.p
-
 
 
 df = pd.read_pickle(args.file)
@@ -30,21 +26,18 @@ Nt5 = sum(top5)
 Nt1 = sum(top1)
 
 X = df[args.xvar]
-thresh = X[wrong].quantile(p)
+I = np.argsort(X)
+Xs = X[I]
+t5s = top5[I]
+t1s = top1[I]
+ws = wrong[I]
 
-false5 = (X[top5]>=thresh).sum()/Nt5
-false1 = (X[top1]>=thresh).sum()/Nt1
+N = np.arange(1,Nsamples+1)
+Nt5 = t5s.cumsum()
+Nw = ws.cumsum()
+Nt1 = t1s.cumsum()
 
-print('Hypothesis: Image misclassified')
-print('    Variable: %s, alpha=%.2f%%'%(args.xvar, args.p*100))
-print('')
-print('    P(image top5 but rejected) = %.2f%%'%(false5*100))
-print('    P(image top1 but rejected) = %.2f%%'%(false1*100))
-
-
-
-
-
-
-
-
+cdf = pd.DataFrame({'X': Xs, 'p(top5|x<X)': Nt5/N,
+                    'p(wrong|x<X)':Nw/N,
+                    'p(top1|x<X)':Nt1/N,
+                    'p(x<X)': N/Nsamples})

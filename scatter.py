@@ -25,6 +25,9 @@ parser.add_argument('--save', action='store_true', dest='save')
 parser.add_argument('--no-save', action='store_false',dest='save')
 parser.add_argument('--leg', action='store_true', dest='leg')
 parser.add_argument('--no-leg', action='store_false',dest='leg')
+parser.add_argument('--name', type=str, default='scatter.pdf', help='file name for saving')
+parser.add_argument('--xlim', type=float, default=None, nargs='*')
+parser.add_argument('--ylim', type=float, default=None, nargs='*')
 parser.set_defaults(show=True)
 parser.set_defaults(save=False)
 parser.set_defaults(leg=False)
@@ -61,12 +64,20 @@ C = df['type'].map({'top1':0.2, 'top5':0.0, 'mis-classified':0.4})
 X = df[args.xvar]
 Y = df[args.yvar]
 
-xmin = max(0.9*X.min(), 1e-6)
-xmax = 1.5*X.max()
-ymin = max(0.9*Y.min(), 1e-6)
-ymax = 1.5*Y.max()
-scxlim = (xmin, xmax)
-scylim = (ymin, ymax)
+if args.xlim is None:
+    xmin = max(0.9*X.min(), 1e-6)
+    xmax = 1.5*X.max()
+    scxlim = (xmin, xmax)
+else:
+    scxlim = tuple(args.xlim)
+
+if args.ylim is None:
+    ymin = max(0.9*Y.min(), 1e-6)
+    ymax = 1.5*Y.max()
+    scylim = (ymin, ymax)
+else:
+    scylim = tuple(args.ylim)
+
 
 sc = ax.scatter(X,Y, c=C, s=1, cmap=cmap, norm=norm)
 
@@ -129,5 +140,5 @@ if show:
     plt.show()
 if args.save:
     pth = os.path.split(args.file)[0]
-    fig.savefig(os.path.join(pth,'scatter.pdf'),
+    fig.savefig(os.path.join(pth,args.name),
             format='pdf',bbox_inches='tight',dpi=dpi)
