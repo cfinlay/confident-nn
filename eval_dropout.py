@@ -58,6 +58,7 @@ def main():
                                                             ])),
                             batch_size=args.batch_size, shuffle=False,
                             num_workers=4, pin_memory=True)
+        Nsamples = 50000
     else:
         with open(args.attack_path,'rb') as f:
             dct = pk.load(f)
@@ -72,7 +73,7 @@ def main():
                 num_workers=4,
                 shuffle=False,
                 pin_memory=True)
-    Nsamples = len(loader.dataset)
+        Nsamples = len(loader.dataset)
     Nclasses = 1000 # ImageNet
 
 
@@ -125,6 +126,8 @@ def main():
         varview = var.view(Nb, -1)
         frob = varview.norm(2,-1)
         VarNorm[ix] = frob
+
+        k+=Nb
 
 
 
