@@ -25,7 +25,6 @@ parser.add_argument('--batch-size', type=int, default=100,metavar='N',
         help='number of images to evaluate at a time')
 parser.add_argument('--mode', type=str,default='val', choices=['val'])
 parser.add_argument('--attack-path', type=str, default=None)
-parser.add_argument('--seed', type=int, default=0.)
 
 #def main():
 args = parser.parse_args()
