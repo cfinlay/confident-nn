@@ -28,7 +28,8 @@ parser.add_argument('--save-images', action='store_true', default=True,
         help='save perturbed images to a npy file')
 parser.add_argument('--batch-size',type=int, default=100)
 parser.add_argument('--save-path', type=str, default=None)
-parser.add_argument('--indices', type=int, required=True, nargs='+')
+parser.add_argument('--indices', type=int, default=None, nargs='+')
+parser.add_argument('--index-path', type=str, default=None)
 
 
 #def main():
@@ -39,13 +40,19 @@ if args.save_path is None:
 pth = args.save_path
 os.makedirs(pth, exist_ok=True)
 
-args.batch_size = min(args.batch_size, len(args.indices))
-args.num_images = len(args.indices)
 
 print('Arguments:')
 for p in vars(args).items():
     print('  ',p[0]+': ',p[1])
 print('\n')
+
+if args.indices is not None:
+    ix = np.array(args.indices, dtype=np.int64)
+elif args.index_path is not None:
+    ix = np.load(open(args.index_path,'rb'))
+
+args.batch_size = min(args.batch_size, len(ix))
+args.num_images = len(ix)
 
 has_cuda = torch.cuda.is_available()
 
@@ -64,7 +71,7 @@ dataset = datasets.ImageFolder(valdir, transforms.Compose([
                                             transforms.ToTensor(),
                                             normalize,
                                                     ]))
-subset = Subset(dataset, args.indices)
+subset = Subset(dataset, ix)
 loader = torch.utils.data.DataLoader( subset,
                     batch_size=args.batch_size, shuffle=False,
                     num_workers=4, pin_memory=True)
@@ -124,7 +131,7 @@ if args.save_images:
 
     with open(os.path.join(pth, 'saliency.pkl'),'wb') as f:
         pk.dump({'images':P, 'gradients':O, 'labels':L,'predictions':Pr,
-            'indices':np.array(args.indices,dtype=np.int64)}, f)
+            'indices':ix}, f)
 
 #if __name__=="__main__":
 #    main()
