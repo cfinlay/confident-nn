@@ -6,5 +6,8 @@ labdict = {'loss':r'$\ell(x)$',
            'gradw_loss_2norm': r'$\Vert \nabla_w \ell \Vert$',
            'gradx_modelsq_2norm': r'$\Vert \nabla_x \vert f \vert^2 \Vert$',
            'log_pdiff': r'$-\log(f_1-f_2)$',
+           'model_entropy': 'Model Entropy',
+           'norm_dropout_var': 'Dropout Variance',
+           'norm_dropout-0.01_var': 'Dropout Variance',
            'log_p5diff': r'$-\log(f_1-f_5)$',
            'gradw_modelsq_2norm': r'$\Vert \nabla_w \vert f \vert^2 \Vert$'}
