@@ -10,4 +10,5 @@ labdict = {'loss':r'$\ell(x)$',
            'norm_dropout_var': 'Dropout Variance',
            'norm_dropout-0.01_var': 'Dropout Variance',
            'log_p5diff': r'$-\log(f_1-f_5)$',
+           'neg_log_pmax': r'$-\log(f_1)$',
            'gradw_modelsq_2norm': r'$\Vert \nabla_w \vert f \vert^2 \Vert$'}

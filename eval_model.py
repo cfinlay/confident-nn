@@ -135,6 +135,7 @@ LossTop5Grady = torch.zeros(Nsamples).cuda()
 LossTop1Grady = torch.zeros(Nsamples).cuda()
 LogPDiff = torch.zeros(Nsamples).cuda()
 LogP5Diff = torch.zeros(Nsamples).cuda()
+NegLogPmax = torch.zeros(Nsamples).cuda()
 Entropy = torch.zeros(Nsamples).cuda()
 
 
@@ -152,6 +153,8 @@ for i, (x,y) in enumerate(loader):
     p = yhat.softmax(dim=-1)
     e = (-p*p.log()).sum(dim=-1)
 
+    pmax = p.max(dim=-1)[0]
+    log = pmax.log()
 
     pnorm = p.norm(dim=-1)
     loss = criterion(yhat, y)
@@ -184,6 +187,7 @@ for i, (x,y) in enumerate(loader):
     LossTop1Grady[ix] = gt1y.detach()
     LogPDiff[ix] = logpdiff.detach()
     LogP5Diff[ix] = logp5diff.detach()
+    NegLogPmax[ix] = -log.detach()
     Entropy[ix] = e.detach()
 sys.stdout.write('   Completed [%6.2f%%]\r'%(100.))
 
@@ -254,6 +258,7 @@ df = pd.DataFrame({'loss':Loss.cpu().numpy(),
                    'gradw_loss_2norm': LossGradw.cpu().numpy(),
                    'log_pdiff': LogPDiff.cpu().numpy(),
                    'log_p5diff': LogP5Diff.cpu().numpy(),
+                   'neg_log_pmax': NegLogPmax.cpu().numpy(),
                    'model_entropy': Entropy.cpu().numpy(),
                    'grady_loss_2norm': LossGrady.cpu().numpy()})
 
