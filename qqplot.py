@@ -6,7 +6,7 @@ import seaborn as sns
 import argparse
 
 
-parser = argparse.ArgumentParser('Generate a frequency histogram')
+parser = argparse.ArgumentParser('QQ Plot for histograms of two variables')
 
 parser.add_argument('--file', type=str,
         default='logs/imagenet/resnet152/eval.pkl',metavar='F', 
