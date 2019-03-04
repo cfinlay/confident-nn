@@ -1,4 +1,4 @@
-labdict = {'loss':r'$\ell(x)$',
+labdict = {'loss':r'Loss',
            'gradx_loss_2norm': r'$\Vert \nabla_x \ell \Vert$',
            'grady_loss_2norm': r'$\Vert \nabla_y \ell \Vert$',
            'grady_top5_loss_2norm': r'$\Vert \nabla_y \ell_\mathrm{top5} \Vert$',
