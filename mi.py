@@ -10,10 +10,9 @@ parser = argparse.ArgumentParser('Mutual information for histogram of two variab
 parser.add_argument('--file', type=str,
         default='logs/imagenet/resnet152/eval.pkl',metavar='F', 
         help='Location where pkl file saved')
-parser.add_argument('--nbins', type=int, default=40)
+parser.add_argument('--nbins', type=int, default=50)
 parser.add_argument('--xvar', type=str, default='loss')
 parser.add_argument('--yvar', type=str, default='model_entropy')
-parser.add_argument('--filter', type=str, choices=['all','top1','top5','wrong'],default='all')
 
 parser.set_defaults(show=True)
 parser.set_defaults(save=False)
@@ -26,34 +25,39 @@ from common import labdict
 df = pd.read_pickle(args.file)
 Nsamples = len(df)
 
-if args.filter in ['top1','top5']:
-    b = df[args.filter]
-elif args.filter=='wrong':
-    b = np.logical_not(df['top5'])
-else:
-    b = np.arange(len(df))
-X = df[args.xvar][b]
-Y = df[args.yvar][b]
-X_ = X[np.logical_and(X>0, Y>0)]
-Y = Y[np.logical_and(X>0,Y>0)]
-X = X_
 
-df = pd.DataFrame({'logX':np.log(X),'logY':np.log(Y)})
+X = df[args.xvar]#[b]
+Y = df[args.yvar]#[b]
 
-H, xe, ye = np.histogram2d(df['logX'], df['logY'], bins=args.nbins, density=True)
-H = H/np.sum(H)
-Hx = np.sum(H,axis=0,keepdims=True)
-Hy = np.sum(H,axis=1,keepdims=True)
+Nbins = args.nbins
+Yc, Ybins = pd.qcut(Y,Nbins,retbins=True, duplicates='drop')
+Xc, Xbins = pd.qcut(X,Nbins,retbins=True,duplicates='drop')
+Yvc = Yc.value_counts(sort=False)
+Xvc = Xc.value_counts(sort=False)
 
-dx = (xe[1:]-xe[:-1])[0]
-dy = (ye[1:]-ye[:-1])[0]
+
+H, xe, ye = np.histogram2d(X, Y, bins=[Xbins, Ybins])
+Hy = np.sum(H,axis=0,keepdims=True)
+Hx = np.sum(H,axis=1,keepdims=True)
+
+dx = (Xbins[1:]-Xbins[:-1])
+dx = np.reshape(dx, Hx.shape)
+dy = (Ybins[1:]-Ybins[:-1])
+dy = np.reshape(dy, Hy.shape)
+
+dX = dx*dy
+N = len(df)
+P = H/N
+Px = Hx/N
+Py = Hy/N
+
 
 
 
 with warnings.catch_warnings():
     warnings.simplefilter('ignore')
-    integrand = H*(np.log(H) - np.log(Hx) - np.log(Hy))
+    integrand = P*(np.log(P) - np.log(Px) - np.log(Py))
 integrand[np.isnan(integrand)]=0.
-I = np.sum(integrand)*dx*dy
+I = np.sum(integrand*dX)
 
 print('\nMutual information: %.4g\n'%I)
