@@ -125,6 +125,7 @@ criterion = nn.CrossEntropyLoss(reduction='none').cuda()
 
 Loss = torch.zeros(Nsamples).cuda()
 Top1 = torch.zeros(Nsamples,dtype=torch.uint8).cuda()
+Rank = torch.zeros(Nsamples,dtype=torch.int64).cuda()
 Top5 = torch.zeros(Nsamples,dtype=torch.uint8).cuda()
 LossGradx = torch.zeros(Nsamples).cuda()
 ModelSqGradx = torch.zeros(Nsamples).cuda()
@@ -153,6 +154,10 @@ for i, (x,y) in enumerate(loader):
     p = yhat.softmax(dim=-1)
     e = (-p*p.log()).sum(dim=-1)
 
+    vs, js = yhat.sort(dim=-1,descending=True)
+    b = js==y.view(-1,1)
+
+    rank = Jx[b]
     pmax = p.max(dim=-1)[0]
     log = pmax.log()
 
@@ -178,6 +183,7 @@ for i, (x,y) in enumerate(loader):
     ix = torch.arange(i*args.batch_size, (i+1)*args.batch_size,device=x.device)
 
     Loss[ix] = loss.detach()
+    Rank[ix]= rank.detach()
     Top1[ix] = top1.detach()
     Top5[ix] = top5.detach().type(torch.uint8)
     LossGradx[ix] = gx.detach()
