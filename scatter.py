@@ -17,7 +17,7 @@ parser.add_argument('--fig-size', type=float, default=6,
         help='Figure size (inches)')
 parser.add_argument('--font-size',type=float, default=20)
 parser.add_argument('--dpi', type=int, default=80)
-parser.add_argument('--xvar', type=str, default='gradx_modelsq_2norm')
+parser.add_argument('--xvar', type=str, default='model_entropy')
 parser.add_argument('--yvar', type=str, default='loss')
 parser.add_argument('--no-show', action='store_false', dest='show')
 parser.add_argument('--show', action='store_true', dest='show')
@@ -59,7 +59,7 @@ plt.close('all')
 
 fig, ax = plt.subplots(1, figsize=figsz)
 norm = Normalize(vmin=0,vmax=1.)
-C = df['type'].map({'top1':0.2, 'top5':0.0, 'mis-classified':0.4})
+C = df['type'].map({'top1':0.2, 'top5':0.0, 'mis-classified':0.39})
 
 X = df[args.xvar]
 Y = df[args.yvar]
