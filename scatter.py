@@ -46,7 +46,7 @@ plt.rc('axes', titlesize=fsz)
 plt.rc('axes', labelsize=fsz)
 plt.rc('xtick', labelsize=fsz)
 plt.rc('ytick', labelsize=fsz)
-plt.rc('legend', fontsize=.75*fsz)
+plt.rc('legend', fontsize=.66*fsz)
 plt.rc('figure', titlesize=fsz)
 
 dpi = args.dpi

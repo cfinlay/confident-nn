@@ -135,9 +135,9 @@ def main():
 
     try:
         df = pd.read_pickle(os.path.join(args.save_path))
-        df['norm_dropout-%.2g_var'%args.p] = VarNorm.cpu().numpy()
+        df['norm_dropout_%.2g_var'%args.p] = VarNorm.cpu().numpy()
     except FileNotFoundError:
-        df = pd.DataFrame({'norm_dropout-%.2g_var'%args.p:VarNorm.cpu().numpy()})
+        df = pd.DataFrame({'norm_dropout_%.2g_var'%args.p:VarNorm.cpu().numpy()})
 
     df.to_pickle(args.save_path)
 
