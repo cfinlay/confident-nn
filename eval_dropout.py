@@ -11,19 +11,20 @@ import torchvision.transforms as transforms
 
 import models.resnet as models
 
+from flashlight.model_diagnostics.utils import get_model, get_loader
 
 
 
 parser = argparse.ArgumentParser('Reports variance of ImageNet model ran with dropout.')
 
 parser.add_argument('--model', type=str, default='resnet152',
-        choices=['resnet152'], help='Model')
+        choices=['resnet152','ResNeXt34_2x32','ResNeXt34_4x32','AllCNN'], help='Model')
 parser.add_argument('--data-dir', type=str,
         default='/mnt/data/scratch/ILSVRC2012/',metavar='DIR', 
         help='Directory where ImageNet data is saved')
 parser.add_argument('--batch-size', type=int, default=100,metavar='N',
         help='number of images to evaluate at a time')
-parser.add_argument('--mode', type=str,default='val', choices=['val'])
+parser.add_argument('--dataset',type=str, choices=['cifar10','cifar100','imagenet'])
 parser.add_argument('--attack-path', type=str, default=None)
 parser.add_argument('--p', type=float, default=0.01, help='dropout probability')
 parser.add_argument('--reps', type=int, default=30, help='number of repetitions')
@@ -31,7 +32,7 @@ parser.add_argument('--reps', type=int, default=30, help='number of repetitions'
 def main():
     args = parser.parse_args()
     if args.attack_path is None:
-        args.save_path = os.path.join('./logs/imagenet/',args.model, 'eval.pkl')
+        args.save_path = os.path.join('./logs/', args.dataset, args.model, 'eval.pkl')
     else:
         d, f = os.path.split(args.attack_path)
         name = os.path.splitext(f)[0]
@@ -39,47 +40,66 @@ def main():
     pth = os.path.split(args.save_path)[0]
     os.makedirs(pth, exist_ok=True)
 
-
-    # Data loading code
-    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
-                                     std=[0.229, 0.224, 0.225])
-    if args.attack_path is None:
-        traindir = os.path.join(args.data_dir, 'train')
-        valdir = os.path.join(args.data_dir, 'val')
-
-        
-
-        loader = torch.utils.data.DataLoader(
-                            datasets.ImageFolder(valdir, transforms.Compose([
-                                                    transforms.Resize(256),
-                                                    transforms.CenterCrop(224),
-                                                    transforms.ToTensor(),
-                                                    normalize,
-                                                            ])),
-                            batch_size=args.batch_size, shuffle=False,
-                            num_workers=4, pin_memory=True)
-        Nsamples = 50000
-    else:
-        with open(args.attack_path,'rb') as f:
-            dct = pk.load(f)
-        x = dct['perturbed']
-        y = dct['labels']
-        y = torch.from_numpy(y)
-        x = torch.from_numpy(x)
-
-        test = torch.utils.data.TensorDataset(x,y)
-        loader = torch.utils.data.DataLoader(test, 
-                batch_size=args.batch_size,
-                num_workers=4,
-                shuffle=False,
-                pin_memory=True)
-        Nsamples = len(loader.dataset)
-    Nclasses = 1000 # ImageNet
-
-
+    has_cuda = torch.cuda.is_available()
     Nreps = args.reps
     dropout = args.p
-    m = getattr(models, args.model)(pretrained=True, dropout=dropout).cuda()
+
+    if args.dataset=='imagenet':
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                         std=[0.229, 0.224, 0.225])
+        if args.attack_path is None:
+            traindir = os.path.join(args.data_dir, 'train')
+            valdir = os.path.join(args.data_dir, 'val')
+
+            
+
+            loader = torch.utils.data.DataLoader(
+                                datasets.ImageFolder(valdir, transforms.Compose([
+                                                        transforms.Resize(256),
+                                                        transforms.CenterCrop(224),
+                                                        transforms.ToTensor(),
+                                                        normalize,
+                                                                ])),
+                                batch_size=args.batch_size, shuffle=False,
+                                num_workers=4, pin_memory=True)
+        else:
+            with open(args.attack_path,'rb') as fo:
+                d, f = os.path.split(args.attack_path)
+                name, ext = os.path.splitext(f)
+
+                if ext=='.pkl':
+                    dct = pk.load(fo)
+                elif ext=='.npz':
+                    dct=np.load(fo)
+                x = dct['perturbed']
+                y = dct['labels']
+                y = torch.from_numpy(y)
+                x = torch.from_numpy(x)
+
+            test = torch.utils.data.TensorDataset(x,y)
+            loader = torch.utils.data.DataLoader(test, 
+                    batch_size=args.batch_size,
+                    num_workers=4,
+                    shuffle=False,
+                    pin_memory=has_cuda)
+
+        Nsamples = len(loader.dataset)
+        Nclasses = 1000
+
+        m = getattr(models, args.model)(pretrained=True, dropout=dropout).cuda()
+    else:
+        d, f = os.path.split(args.save_path)
+
+        Nclasses = 100 if args.dataset=='cifar100' else 10
+        Nsamples = 10000
+
+        if args.attack_path is not None:
+            raise NotImplementedError
+
+        loader = get_loader(d, batch_size=args.batch_size)
+        m = get_model(d, Nclasses, dropout=dropout)
+
+
     m.eval()
 
     def turn_on_dropout(module):
