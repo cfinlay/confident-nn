@@ -24,7 +24,7 @@ parser.add_argument('--data-dir', type=str,
         help='Directory where ImageNet data is saved')
 parser.add_argument('--batch-size', type=int, default=100,metavar='N',
         help='number of images to evaluate at a time')
-parser.add_argument('--dataset',type=str, choices=['cifar10','cifar100','imagenet'])
+parser.add_argument('--dataset',type=str, choices=['coco','cifar10','cifar100','imagenet'])
 parser.add_argument('--attack-path', type=str, default=None)
 parser.add_argument('--p', type=float, default=0.01, help='dropout probability')
 parser.add_argument('--reps', type=int, default=30, help='number of repetitions')
@@ -87,6 +87,36 @@ def main():
         Nclasses = 1000
 
         m = getattr(models, args.model)(pretrained=True, dropout=dropout).cuda()
+    elif args.dataset == 'coco':
+        normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406],
+                                            std=[0.229, 0.224, 0.225])
+
+        Nclasses = 80
+        Nsamples = 5000
+
+        traindir = os.path.join(args.data_dir, 'images/train/train2014')
+        valdir = os.path.join(args.data_dir, 'images/val/val2014')
+        annotation_file = os.path.join(args.data_dir, 'annotations/instances_val2014.json')
+
+        dset = datasets.CocoDetection(valdir, annotation_file, transforms.Compose([
+                                                        transforms.Resize(256),
+                                                        transforms.CenterCrop(224),
+                                                        transforms.ToTensor(),
+                                                        normalize,
+                                                        ]))
+        sub_idx = np.random.choice(np.arange(len(dset)), size=Nsamples)
+
+        subset = torch.utils.data.Subset(dset, sub_idx)
+
+        loader = torch.utils.data.DataLoader(subset,
+                        batch_size=args.batch_size, shuffle=False,
+                        num_workers=1, pin_memory=True)
+
+        if args.attack_path is not None:
+            raise NotImplementedError
+
+        m = getattr(models, args.model)(pretrained=True).cuda()
+
     else:
         d, f = os.path.split(args.save_path)
 
@@ -119,14 +149,24 @@ def main():
     sys.stdout.write('\nRunning through dataloader:\n')
     VarNorm = torch.zeros(Nsamples).cuda()
     k = 0
+    Nc = 1000 if args.model=='resnet152' else Nclasses
     for i, (x,y) in enumerate(loader):
 
-        x, y = x.cuda(), y.cuda()
+        if args.dataset != 'coco':
+            x, y = x.cuda(), y.cuda()
+
+        else:
+            x = x.cuda()
+            try:
+                y = y[0]['category_id']
+                y = y.cuda()
+            except (KeyError, IndexError): # hack for now
+                y = torch.zeros(args.batch_size, dtype=torch.int64).cuda()
         Nb = len(y)
         ix = torch.arange(k, k+Nb).cuda()
 
-        mean = torch.zeros(Nb, Nclasses).cuda()
-        moment2 = torch.zeros(Nb, Nclasses, Nclasses).cuda()
+        mean = torch.zeros(Nb, Nc).cuda()
+        moment2 = torch.zeros(Nb, Nc, Nc).cuda()
 
 
         for j in range(Nreps):

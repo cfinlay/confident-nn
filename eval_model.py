@@ -196,8 +196,9 @@ Entropy = torch.zeros(Nsamples).cuda()
 
 
 sys.stdout.write('\nRunning through dataloader:\n')
-Jx = torch.arange(Nclasses).cuda().view(1,-1)
-Jx = Jx.expand(args.batch_size, Nclasses)
+Nc = 1000 if args.model=='resnet152' else Nclasses
+Jx = torch.arange(Nc).cuda().view(1,-1)
+Jx = Jx.expand(args.batch_size, Nc)
 for i, (x,y) in enumerate(loader):
     sys.stdout.write('  Completed [%6.2f%%]\r'%(100*i*args.batch_size/Nsamples))
     sys.stdout.flush()
