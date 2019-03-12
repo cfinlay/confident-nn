@@ -43,36 +43,38 @@ X_ = df[args.xvar]
 Y_ = df[args.yvar]
 
 I = []
-for i in range(K):
-    n = N//K
-    ix = Ix[n*i:n*(i+1)]
-    X = np.delete(X_.to_numpy(), ix)
-    Y = np.delete(Y_.to_numpy(), ix)
+#for i in range(K):
+    #n = N//K
+    #ix = Ix[n*i:n*(i+1)]
+    #X = np.delete(X_.to_numpy(), ix)
+    #Y = np.delete(Y_.to_numpy(), ix)
+X = X_[Ix]
+Y = Y_[Ix]
 
 
-    Nbins = args.nbins
-    Yc, Ybins = pd.qcut(Y,Nbins,retbins=True, duplicates='drop')
-    if len(args.xbins)==0:
-        Xc, Xbins = pd.qcut(X,Nbins,retbins=True,duplicates='drop')
-    else:
-        Xc, Xbins = pd.cut(X,args.xbins,retbins=True,duplicates='drop', right=False)
+Nbins = args.nbins
+Yc, Ybins = pd.qcut(Y,Nbins,retbins=True, duplicates='drop')
+if len(args.xbins)==0:
+    Xc, Xbins = pd.qcut(X,Nbins,retbins=True,duplicates='drop')
+else:
+    Xc, Xbins = pd.cut(X,args.xbins,retbins=True,duplicates='drop', right=False)
 
-    #Yvc = Yc.value_counts(sort=False)
-    #Xvc = Xc.value_counts(sort=False)
-
-
-    H, xe, ye = np.histogram2d(X, Y, bins=[Xbins, Ybins])
-
-    P = H/np.sum(H)
-
-    Py = np.sum(P,axis=0,keepdims=True)
-    Px = np.sum(P,axis=1,keepdims=True)
+#Yvc = Yc.value_counts(sort=False)
+#Xvc = Xc.value_counts(sort=False)
 
 
-    with warnings.catch_warnings():
-        warnings.simplefilter('ignore')
-        integrand = P*(np.log2(P) - np.log2(Px) - np.log2(Py))
-    integrand[np.isnan(integrand)]=0.
-    I.append(np.sum(integrand))
+H, xe, ye = np.histogram2d(X, Y, bins=[Xbins, Ybins])
 
-print('\nMutual information (bits): %.4g\n'%np.mean(I))
+P = H/np.sum(H)
+
+Py = np.sum(P,axis=0,keepdims=True)
+Px = np.sum(P,axis=1,keepdims=True)
+
+
+with warnings.catch_warnings():
+    warnings.simplefilter('ignore')
+    integrand = P*(np.log2(P) - np.log2(Px) - np.log2(Py))
+integrand[np.isnan(integrand)]=0.
+I.append(np.sum(integrand))
+
+print('\nMutual information (bits): %.4g'%np.mean(I))

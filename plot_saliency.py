@@ -7,6 +7,7 @@ import torch as th
 import torchvision.utils as utils
 import matplotlib.pyplot as plt
 
+# wrong images with entropy<1e-2
 pth = 'logs/imagenet/resnet152/saliency.pkl'
 with open(pth,'rb') as f:
     dct = pk.load(f)
@@ -43,9 +44,9 @@ X[:,2,:,:].mul_(std[2]).add_(mean[2])
 def show(img):
     npimg = img.numpy()
     plt.imshow(np.transpose(npimg, (1,2,0)), interpolation='nearest')
-    
+#    
 #Ims = th.cat([X,dX])
 Ims = X
-g = utils.make_grid(Ims,nrow=5)
+g = utils.make_grid(Ims[:36],nrow=6, padding=6, pad_value=1.)
 show(g)
 plt.show()
