@@ -143,37 +143,37 @@ for p in m.parameters():
 if torch.cuda.device_count()>1:
     m = nn.DataParallel(m)
 
-#class GradNorms(nn.Module):
-#    def __init__(self, norm, summary=lambda x: x, create_graph=False, retain_graph=False):
-#        super().__init__()
-#        self.norm = norm
-#        self.create_graph=create_graph
-#        self.summary = summary
-#        self.retain_graph = retain_graph
-#
-#    def forward(self, l, x):
-#        sh = x.shape
-#        bsz = sh[0]
-#
-#        if not x.requires_grad:
-#            x.requires_grad_()
-#
-#        dx, = grad(l, x, create_graph=self.create_graph, retain_graph=self.retain_graph)
-#        dx = dx.view(bsz, -1)
-#        
-#        if self.norm in [2,'2']:
-#            n = dx.norm(p=2,dim=-1)
-#        elif self.norm in [1,'1']:
-#            n = dx.norm(p=1,dim=-1)
-#        elif self.norm in ['inf',inf]:
-#            n = dx.abs().max(dim=-1)[0]
-#        else:
-#            raise ValueError('%s is not an available norm'%self.norm)
-#
-#        return self.summary(n)
+class GradNorms(nn.Module):
+    def __init__(self, norm, summary=lambda x: x, create_graph=False, retain_graph=False):
+        super().__init__()
+        self.norm = norm
+        self.create_graph=create_graph
+        self.summary = summary
+        self.retain_graph = retain_graph
+
+    def forward(self, l, x):
+        sh = x.shape
+        bsz = sh[0]
+
+        if not x.requires_grad:
+            x.requires_grad_()
+
+        dx, = grad(l, x, create_graph=self.create_graph, retain_graph=self.retain_graph)
+        dx = dx.view(bsz, -1)
+        
+        if self.norm in [2,'2']:
+            n = dx.norm(p=2,dim=-1)
+        elif self.norm in [1,'1']:
+            n = dx.norm(p=1,dim=-1)
+        elif self.norm in ['inf',inf]:
+            n = dx.abs().max(dim=-1)[0]
+        else:
+            raise ValueError('%s is not an available norm'%self.norm)
+
+        return self.summary(n)
 
 #GradFunc0 = GradNorms(2,retain_graph=True)
-#GradFunc1 = GradNorms(2,retain_graph=False)
+GradFunc1 = GradNorms(2,retain_graph=False)
 
 criterion = nn.CrossEntropyLoss(reduction='none').cuda()
 
@@ -182,7 +182,7 @@ Top1 = torch.zeros(Nsamples,dtype=torch.uint8).cuda()
 Rank = torch.zeros(Nsamples,dtype=torch.int64).cuda()
 Top5 = torch.zeros(Nsamples,dtype=torch.uint8).cuda()
 #LossGradx = torch.zeros(Nsamples).cuda()
-#ModelSqGradx = torch.zeros(Nsamples).cuda()
+ModelSqGradx = torch.zeros(Nsamples).cuda()
 #ModelSqGradw = torch.zeros(Nsamples).cuda()
 #LossGradw = torch.zeros(Nsamples).cuda()
 #LossGrady = torch.zeros(Nsamples).cuda()
@@ -191,6 +191,7 @@ Top5 = torch.zeros(Nsamples,dtype=torch.uint8).cuda()
 #LogPDiff = torch.zeros(Nsamples).cuda()
 #LogP5Diff = torch.zeros(Nsamples).cuda()
 NegLogPmax = torch.zeros(Nsamples).cuda()
+NegLogP5 = torch.zeros(Nsamples).cuda()
 Entropy = torch.zeros(Nsamples).cuda()
 
 
@@ -227,11 +228,14 @@ for i, (x,y) in enumerate(loader):
     pmax = p.max(dim=-1)[0]
     log = pmax.log()
 
+    p5 = p.topk(5,dim=-1)[0]
+    sump5 = p.sum(dim=-1)
+
     pnorm = p.norm(dim=-1)
     loss = criterion(yhat, y)
 
     #gx = GradFunc0(loss.sum(), x)
-    #dpn = GradFunc1(pnorm.sum(),x)
+    dpn = GradFunc1(pnorm.sum(),x)
     #gy = (-yhat.softmax(dim=-1).log()).norm(dim=-1)
 
     t5 = p.topk(5,dim=-1)[0]
@@ -253,13 +257,14 @@ for i, (x,y) in enumerate(loader):
     Top1[ix] = top1.detach()
     Top5[ix] = top5.detach().type(torch.uint8)
     #LossGradx[ix] = gx.detach()
-    #ModelSqGradx[ix] = dpn.detach()
+    ModelSqGradx[ix] = dpn.detach()
     #LossGrady[ix] = gy.detach()
     #LossTop5Grady[ix] = gt5y.detach()
     #LossTop1Grady[ix] = gt1y.detach()
     #LogPDiff[ix] = logpdiff.detach()
     #LogP5Diff[ix] = logp5diff.detach()
     NegLogPmax[ix] = -log.detach()
+    NegLogP5[ix]= -sump5.log()
     Entropy[ix] = e.detach()
 sys.stdout.write('   Completed [%6.2f%%]\r'%(100.))
 
@@ -331,12 +336,13 @@ df = pd.DataFrame({'loss':Loss.cpu().numpy(),
                    #'grady_top5_loss_2norm' : LossTop5Grady.cpu().numpy(),
                    #'grady_top1_loss_2norm' : LossTop1Grady.cpu().numpy(),
                    #'gradx_loss_2norm': LossGradx.cpu().numpy(),
-                   #'gradx_modelsq_2norm': ModelSqGradx.cpu().numpy(),
+                   'gradx_modelsq_2norm': ModelSqGradx.cpu().numpy(),
                    #'gradw_modelsq_2norm': ModelSqGradw.cpu().numpy(),
                    #'gradw_loss_2norm': LossGradw.cpu().numpy(),
                    #'log_pdiff': LogPDiff.cpu().numpy(),
                    #'log_p5diff': LogP5Diff.cpu().numpy(),
                    'neg_log_pmax': NegLogPmax.cpu().numpy(),
+                   'neg_log_p5': NegLogP5.cpu().numpy(),
                    'model_entropy': Entropy.cpu().numpy(),
                    'rank': Rank.cpu().numpy()})#,
                    #'grady_loss_2norm': LossGrady.cpu().numpy()})
