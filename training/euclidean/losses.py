@@ -17,6 +17,7 @@ class Criterion(nn.Module):
         dist = diff.norm(2,dim=-1).pow(2)
         dist[ix,y]*=-1
 
+        #l = th.exp(1/dist).sum(dim=-1).log().mean()
         l = th.exp(-dist).sum(dim=-1).log().mean()
 
         return l
