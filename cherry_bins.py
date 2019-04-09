@@ -13,6 +13,8 @@ parser.add_argument('--file', type=str,
 parser.add_argument('--nbins', type=int, default=100)
 parser.add_argument('--quantiles', type=float, nargs=2, default=[0.99,0.95])
 parser.add_argument('--yvar', type=str, default='model_entropy')
+parser.add_argument('--xvar', type=str, default='rank')
+parser.add_argument('--xbins',type=float, nargs='*', default=[0.,1,5,1000])
 
 
 
@@ -20,10 +22,6 @@ parser.add_argument('--yvar', type=str, default='model_entropy')
 parser.set_defaults(show=True)
 parser.set_defaults(save=False)
 
-args = parser.parse_args()
-
-args.xbins=[0.,1.,5.,1000]
-args.xvar='rank'
 
 q0, q1 = args.quantiles
 

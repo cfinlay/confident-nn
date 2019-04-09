@@ -15,6 +15,7 @@ parser.add_argument('--fig-size', type=float, default=6,
         help='Figure size (inches)')
 parser.add_argument('--font-size',type=float, default=20)
 parser.add_argument('--dpi', type=int, default=80)
+parser.add_argument('--nbins', type=int, default=40)
 parser.add_argument('--xvar', type=str, default='model_entropy')
 parser.add_argument('--no-show', action='store_false', dest='show')
 parser.add_argument('--show', action='store_true', dest='show')
@@ -63,6 +64,7 @@ if args.xlim is None:
     scxlim = (xmin, xmax)
 else:
     scxlim = tuple(args.xlim)
+    xmin, xmax = args.xlim
 
 scylim = tuple(args.ylim)
 
@@ -73,7 +75,7 @@ ix15 = np.logical_or(ix5,ix1)
 ixw = np.logical_not(np.logical_or(ix1, ix5))
 
 
-bins = np.logspace(np.log10(xmin),np.log10(xmax),num=40)
+bins = np.logspace(np.log10(xmin),np.log10(xmax),num=args.nbins)
 
 ax.hist(X,bins=bins, weights=np.full(X.size,1/Nsamples), color=colors[1], label='mis-classified')
 ax.hist(X[ix15],bins=bins, weights=np.full(sum(ix15),1/Nsamples), color=colors[0], label='top5')

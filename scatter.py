@@ -126,7 +126,7 @@ ax.set_ylim(scylim)
 
 if args.leg:
     leg_el = []
-    labels = ['top5','top1', 'mis-classified']
+    labels = ['top5', 'mis-classified','top1']
     for c,lab in zip(colors[:3],labels):
         leg_el.append(Line2D([0],[0],markerfacecolor=c,markersize=10,marker='o', label=lab, color='w'))
     ax.legend(handles=leg_el,loc='best')
