@@ -16,7 +16,10 @@ parser.add_argument('--fig-size', type=float, default=6,
 parser.add_argument('--font-size',type=float, default=20)
 parser.add_argument('--dpi', type=int, default=80)
 parser.add_argument('--nbins', type=int, default=40)
+parser.add_argument('--equal', action='store_true', default=False)
 parser.add_argument('--xvar', type=str, default='model_entropy')
+parser.add_argument('--ylabel', type=str, default=None)
+parser.add_argument('--yscale', type=float, default=1.)
 parser.add_argument('--no-show', action='store_false', dest='show')
 parser.add_argument('--show', action='store_true', dest='show')
 parser.add_argument('--save', action='store_true', dest='save')
@@ -75,11 +78,14 @@ ix15 = np.logical_or(ix5,ix1)
 ixw = np.logical_not(np.logical_or(ix1, ix5))
 
 
-bins = np.logspace(np.log10(xmin),np.log10(xmax),num=args.nbins)
+if not args.equal:
+    bins = np.logspace(np.log10(xmin),np.log10(xmax),num=args.nbins)
+else:
+    Xc, bins = pd.qcut(X,args.nbins,retbins=True,duplicates='drop')
 
-ax.hist(X,bins=bins, weights=np.full(X.size,1/Nsamples), color=colors[1], label='mis-classified')
-ax.hist(X[ix15],bins=bins, weights=np.full(sum(ix15),1/Nsamples), color=colors[0], label='top5')
-ax.hist(X[ix1],bins=bins, weights=np.full(sum(ix1),1/Nsamples), color=colors[2], label='top1')
+ax.hist(X,bins=bins, weights=args.yscale*np.full(X.size,1/Nsamples), color=colors[1], label='mis-classified')
+ax.hist(X[ix15],bins=bins, weights=args.yscale*np.full(sum(ix15),1/Nsamples), color=colors[0], label='top5')
+ax.hist(X[ix1],bins=bins, weights=args.yscale*np.full(sum(ix1),1/Nsamples), color=colors[2], label='top1')
 
 ax.grid()
 ax.set_axisbelow(True)
@@ -92,7 +98,11 @@ if args.leg:
 
 extra = []
 extra.append(ax.set_xlabel(labdict[args.xvar]))
-extra.append(ax.set_ylabel('frequency'))
+if args.ylabel is None:
+    extra.append(ax.set_ylabel('frequency'))
+else:
+    extra.append(ax.set_ylabel(args.ylabel))
+
 fig.tight_layout()
 
 if show:

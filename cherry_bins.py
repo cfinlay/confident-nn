@@ -22,6 +22,7 @@ parser.add_argument('--xbins',type=float, nargs='*', default=[0.,1,5,1000])
 parser.set_defaults(show=True)
 parser.set_defaults(save=False)
 
+args = parser.parse_args()
 
 q0, q1 = args.quantiles
 
@@ -59,33 +60,36 @@ Px = np.sum(P,axis=1,keepdims=True)
 # ---------
 # Top1 bins
 # ---------
-CDFx = np.cumsum(P, axis=1)
-TotMass = np.cumsum(Py, axis=1)
-Conditional = CDFx/TotMass
-ConditionalTop1 = Conditional[0,:]
-cutix=np.nonzero(ConditionalTop1>q0)[0][-1]
+try:
+    CDFx = np.cumsum(P, axis=1)
+    TotMass = np.cumsum(Py, axis=1)
+    Conditional = CDFx/TotMass
+    ConditionalTop1 = Conditional[0,:]
+    cutix=np.nonzero(ConditionalTop1>q0)[0][-1]
 
 
-Nc = cutix+1
-CDFx2 = np.cumsum(P[:,Nc:], axis=1)
-TotMass2 = np.cumsum(Py[:,Nc:], axis=1)
-Conditional2 = CDFx2/TotMass2
-ConditionalTop12 = Conditional2[0,:]
-cutix2=np.nonzero(ConditionalTop12>q1)[0][-1]
+    Nc = cutix+1
+    CDFx2 = np.cumsum(P[:,Nc:], axis=1)
+    TotMass2 = np.cumsum(Py[:,Nc:], axis=1)
+    Conditional2 = CDFx2/TotMass2
+    ConditionalTop12 = Conditional2[0,:]
+    cutix2=np.nonzero(ConditionalTop12>q1)[0][-1]
 
 
-Nc2 = cutix+cutix2+2
-CDFx3 = np.cumsum(P[:,Nc2:], axis=1)
-TotMass3 = np.cumsum(Py[:,Nc2:], axis=1)
-Conditional3 = CDFx3/TotMass3
-ConditionalTop13 = Conditional3[0,:]
+    Nc2 = cutix+cutix2+2
+    CDFx3 = np.cumsum(P[:,Nc2:], axis=1)
+    TotMass3 = np.cumsum(Py[:,Nc2:], axis=1)
+    Conditional3 = CDFx3/TotMass3
+    ConditionalTop13 = Conditional3[0,:]
 
 
-Bins = np.array([Ybins[Nc],Ybins[Nc2]])
+    Bins = np.array([Ybins[Nc],Ybins[Nc2]])
 
-print('P(top1 | Y < %.2g) = %.2g,\t\t P(Y < %.2g) = %.2g'%(Bins[0],q0,Bins[0],TotMass[:,cutix][0]))
-print('P(top1 | %.2g <= Y < %.2g) = %.2g,\t P(%.2g <= Y < %.2g) = %.2g'%(Bins[0],Bins[1],q1,Bins[0],Bins[1], TotMass2[:,cutix2][0]))
-print('P(top1 | Y >= %.2g) = %.2g,\t\t P(Y >= %.2g) = %.2g'%(Bins[1],ConditionalTop13[-1],Bins[1], TotMass3[:,-1][0]))
+    print('P(top1 | Y < %.2g) = %.2g,\t\t P(Y < %.2g) = %.2g'%(Bins[0],q0,Bins[0],TotMass[:,cutix][0]))
+    print('P(top1 | %.2g <= Y < %.2g) = %.2g,\t P(%.2g <= Y < %.2g) = %.2g'%(Bins[0],Bins[1],q1,Bins[0],Bins[1], TotMass2[:,cutix2][0]))
+    print('P(top1 | Y >= %.2g) = %.2g,\t\t P(Y >= %.2g) = %.2g'%(Bins[1],ConditionalTop13[-1],Bins[1], TotMass3[:,-1][0]))
+except IndexError:
+    pass
 
 # ---------
 # Top5 bins
