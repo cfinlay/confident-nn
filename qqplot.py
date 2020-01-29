@@ -8,8 +8,8 @@ import argparse
 
 parser = argparse.ArgumentParser('QQ Plot for histograms of two variables')
 
-parser.add_argument('--file', type=str,
-        default='logs/imagenet/resnet152/eval.pkl',metavar='F', 
+parser.add_argument('file', type=str,
+        metavar='DF', 
         help='Location where pkl file saved')
 parser.add_argument('--fig-size', type=float, default=6,
         help='Figure size (inches)')

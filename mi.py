@@ -7,8 +7,8 @@ import warnings
 
 parser = argparse.ArgumentParser('Mutual information for histogram of two variables')
 
-parser.add_argument('--file', type=str,
-        default='logs/imagenet/resnet152/eval.pkl',metavar='F', 
+parser.add_argument('file', type=str,
+        metavar='DF', 
         help='Location where pkl file saved')
 parser.add_argument('--nbins', type=int, default=100)
 parser.add_argument('--yvar', type=str, default='model_entropy')

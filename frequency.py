@@ -8,8 +8,8 @@ import argparse
 
 parser = argparse.ArgumentParser('Generate a frequency histogram')
 
-parser.add_argument('--file', type=str,
-        default='logs/imagenet/resnet152/eval.pkl',metavar='F', 
+parser.add_argument('file', type=str,
+        metavar='DF', 
         help='Location where pkl file saved')
 parser.add_argument('--fig-size', type=float, default=6,
         help='Figure size (inches)')
@@ -93,8 +93,6 @@ ax.set_xscale('log',nonposx='clip')
 ax.set_xlim(scxlim)
 ax.set_ylim(scylim)
 
-if args.leg:
-    ax.legend(loc='best')
 
 extra = []
 extra.append(ax.set_xlabel(labdict[args.xvar]))
@@ -102,8 +100,11 @@ if args.ylabel is None:
     extra.append(ax.set_ylabel('frequency'))
 else:
     extra.append(ax.set_ylabel(args.ylabel))
-
 fig.tight_layout()
+if args.leg:
+    le = ax.legend(loc='left', bbox_to_anchor=(1,0.75))
+    extra.append(le)
+
 
 if show:
     plt.show()
