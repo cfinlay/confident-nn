@@ -11,20 +11,17 @@ import torchvision.transforms as transforms
 
 import models.resnet as models
 
-from flashlight.model_diagnostics.utils import get_model, get_loader
 
 
+parser = argparse.ArgumentParser('Calculates variance of ImageNet model ran with dropout and saves into a DataFrame.')
 
-parser = argparse.ArgumentParser('Reports variance of ImageNet model ran with dropout.')
-
-parser.add_argument('--model', type=str, default='resnet152',
-        choices=['resnet152','ResNeXt34_2x32','ResNeXt34_4x32','AllCNN'], help='Model')
-parser.add_argument('--data-dir', type=str,
-        default='/mnt/data/scratch/ILSVRC2012/',metavar='DIR', 
+parser.add_argument('data-dir', type=str, metavar='DIR', 
         help='Directory where ImageNet data is saved')
+parser.add_argument('--model', type=str, default='resnet152',
+        choices=['resnet152'], help='Model')
 parser.add_argument('--batch-size', type=int, default=100,metavar='N',
         help='number of images to evaluate at a time')
-parser.add_argument('--dataset',type=str, choices=['coco','cifar10','cifar100','imagenet'])
+parser.add_argument('--dataset',type=str, choices=['coco','imagenet'])
 parser.add_argument('--attack-path', type=str, default=None)
 parser.add_argument('--p', type=float, default=0.01, help='dropout probability')
 parser.add_argument('--reps', type=int, default=30, help='number of repetitions')
@@ -117,17 +114,6 @@ def main():
 
         m = getattr(models, args.model)(pretrained=True).cuda()
 
-    else:
-        d, f = os.path.split(args.save_path)
-
-        Nclasses = 100 if args.dataset=='cifar100' else 10
-        Nsamples = 10000
-
-        if args.attack_path is not None:
-            raise NotImplementedError
-
-        loader = get_loader(d, batch_size=args.batch_size)
-        m = get_model(d, Nclasses, dropout=dropout)
 
 
     m.eval()

@@ -8,10 +8,10 @@ import argparse
 from matplotlib.lines import Line2D
 from matplotlib.colors import ListedColormap, Normalize
 
-parser = argparse.ArgumentParser('Generate a scatter plot')
+parser = argparse.ArgumentParser('Generate a scatter plot of two variables')
 
-parser.add_argument('--file', type=str,
-        default='logs/imagenet/resnet152/eval.pkl',metavar='F', 
+parser.add_argument('file', type=str,
+        metavar='DF', 
         help='Location where pkl file saved')
 parser.add_argument('--fig-size', type=float, default=6,
         help='Figure size (inches)')
@@ -128,17 +128,18 @@ ax.set_yscale('log',nonposy='clip')
 ax.set_xlim(scxlim)
 ax.set_ylim(scylim)
 
+extra = []
+extra.append(ax.set_xlabel(labdict[args.xvar]))
+extra.append(ax.set_ylabel(labdict[args.yvar]))
+fig.tight_layout()
 if args.leg:
     leg_el = []
     labels = ['top5', 'mis-classified','top1']
     for c,lab in zip(colors[:3],labels):
         leg_el.append(Line2D([0],[0],markerfacecolor=c,markersize=10,marker='o', label=lab, color='w'))
-    ax.legend(handles=leg_el,loc='best')
+    le =ax.legend(handles=leg_el,loc='left', bbox_to_anchor=(1,0.75))
+    extra.append(le)
 
-extra = []
-extra.append(ax.set_xlabel(labdict[args.xvar]))
-extra.append(ax.set_ylabel(labdict[args.yvar]))
-fig.tight_layout()
 
 if show:
     plt.show()

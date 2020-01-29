@@ -5,10 +5,10 @@ import argparse
 import warnings
 
 
-parser = argparse.ArgumentParser('Bayes ratio for histogram of two variables')
+parser = argparse.ArgumentParser('Bayes ratio and Brier score for histogram of two variables')
 
-parser.add_argument('--file', type=str,
-        default='logs/imagenet/resnet152/eval.pkl',metavar='F', 
+parser.add_argument('file', type=str,
+        metavar='DF', 
         help='Location where pkl file saved')
 parser.add_argument('--nbins', type=int, default=100)
 parser.add_argument('--yvar', type=str, default='model_entropy')
@@ -85,11 +85,44 @@ Otop5 = Ptop5/(1-Ptop5)
 
 Py = P.sum(axis=0)
 Ptop1xbins = P[Xbins[:-1]==0,:].reshape(-1)/Py
-Otop1xbins = Ptop1xbins/(1-Ptop1xbins+args.eps)
-Ptop5xbins = P[Xbins[:-1]<5,:].sum(axis=0)/Py
-Otop5xbins = Ptop5xbins/(1-Ptop5xbins+args.eps)
+Brier1 = Ptop1xbins*(Ptop1xbins - 1)**2 + (1-Ptop1xbins)*Ptop1xbins**2
 
+ix = np.arange(len(Ptop1xbins))
+ix1 = Ptop1xbins==1
+try:
+    lb = np.max(ix[ix1])+1
+except ValueError as e:
+    lb = 0
+Ptop1xbins[0:(lb+1)] = np.sum(Ptop1xbins[0:(lb+1)])/(lb+1)
+
+ix0 = Ptop1xbins==0
+try:
+    ub = np.min(ix[ix0])
+except ValueError as e:
+    ub = len(Ptop1xbins)
+Ptop1xbins[ub:] = np.sum(Ptop1xbins[ub:])/(len(Ptop1xbins)-ub+1)
+
+Otop1xbins = Ptop1xbins/(1-Ptop1xbins+args.eps)
 BR1 = Otop1xbins/Otop1
+
+Ptop5xbins = P[Xbins[:-1]<5,:].sum(axis=0)/Py
+Brier5 = Ptop5xbins*(Ptop5xbins - 1)**2 + (1-Ptop5xbins)*Ptop5xbins**2
+
+ix5 = Ptop5xbins==1
+try:
+    lb = np.max(ix[ix5])+1
+except ValueError as e:
+    lb = 0
+Ptop5xbins[0:(lb+1)] = np.sum(Ptop5xbins[0:(lb+1)])/(lb+1)
+
+ix0 = Ptop5xbins==0
+try:
+    ub = np.min(ix[ix0])
+except ValueError as e:
+    ub = len(Ptop5xbins)
+Ptop5xbins[ub:] = np.sum(Ptop5xbins[ub:])/(len(Ptop5xbins)-ub+1)
+
+Otop5xbins = Ptop5xbins/(1-Ptop5xbins+args.eps)
 BR5 = Otop5xbins/Otop5
 
 BR1 = np.max([BR1,1/BR1],axis=0)
@@ -97,6 +130,7 @@ BR5 = np.max([BR5,1/BR5],axis=0)
 EBR1.append(np.sum(Py*BR1))
 EBR5.append(np.sum(Py*BR5))
 
-print('E[BR, top1] = %.3f'%np.mean(EBR1))
-print('E[BR, top5] = %.3f'%np.mean(EBR5))
-
+print('E[Bayes ratio, top1] = %.3f'%np.mean(EBR1))
+print('E[Bayes ratio, top5] = %.3f'%np.mean(EBR5))
+print('\nBrier, top1 = %.3f'%np.sum(Py*Brier1))
+print('Brier, top5 = %.3f'%np.sum(Py*Brier5))

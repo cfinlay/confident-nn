@@ -4,10 +4,10 @@ import numpy as np
 import argparse
 
 
-parser = argparse.ArgumentParser('Generate a scatter plot')
+parser = argparse.ArgumentParser('Plot the a cumulative distribution of the probalitity correct given a variable')
 
-parser.add_argument('--file', type=str,
-        default='logs/imagenet/resnet152/eval.pkl',metavar='F', 
+parser.add_argument('file', type=str,
+        metavar='DF', 
         help='Location where pkl file saved')
 parser.add_argument('--xvar', type=str, default='gradx_modelsq_2norm')
 #parser.add_argument('--c', type=float, required=True)
