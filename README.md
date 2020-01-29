@@ -12,7 +12,7 @@ First, we generate a DataFrame of per-image variables for a pretrained model, us
 ```
 python eval_model.py /path/to/data/dir/ --model resnet152 --dataset imagenet
 ```
-This will save a pickled DataFrame to `logs/imagenet/resnet152/eval.pkl`
+This will save a pickled pandas DataFrame to `logs/imagenet/resnet152/eval.pkl`
 
 Now we want to compute the odds (Bayes) ratio for say, model entropy. That is, how valuable is knowing the model entropy if we were to place a bet on the whether the model is correct? (For ImageNet, let's say that the model is correct if the predicted class is in the Top5.) We will use the script `br.py` to compute the expected odds ratio:
 ```
