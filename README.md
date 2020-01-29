@@ -31,10 +31,11 @@ To help visualize this a bit better, let's bin our images into 100 equal bins ba
 python frequency.py logs/imagenet/resnet152/eval.pkl --equal --ylim 0 0.025
 ```
 Which gives the following plot
-<p align="center">
-<img align="middle" src="./assets/frequency.png" width="400" height="400" />
+<p align="left">
+<img align="middle" src="./assets/frequency.png" width="300" height="300" />
 </p>
-We can also plot the per-bin odds ratio using `plot_br.py`
+
+We can also plot the per-bin odds ratio using `plot_br.py`,
 ```
 python plot_br.py logs/imagnet/resnet152/eval.pkl
 ```
@@ -42,12 +43,12 @@ Furthemore, supposing that the correct labels were actually available to us, we 
 ```
 python scatter.py logs/imagenet/resnet152/eval.pkl
 ```
-<p align="center">
-<img align="middle" src="./assets/scatter.png" width="400" height="400" />
+<p align="left">
+<img align="middle" src="./assets/scatter.png" width="300" height="300" />
 </p>
 The images with low model entropy but high loss (top left of the scatter plot) are a bit suspicious: why is the model so confident but so wrong on these images? Let's plot the six images in the top left corner of the scatter plot
-<p align="center">
-<img align="middle" src="./assets/misclassified-cropped.png" width="400" height="400" />
+<p align="left">
+<img align="middle" src="./assets/misclassified-cropped.png" width="600" />
 </p>
 We see that the model wasn't so wrong after all. These images have very ambiguous labels, and even a human would likely label these "incorrectly".
 
