@@ -14,7 +14,7 @@ python eval_model.py /path/to/data/dir/ --model resnet152 --dataset imagenet
 ```
 This will save a pickled pandas DataFrame to `logs/imagenet/resnet152/eval.pkl`
 
-Now we want to compute the odds (Bayes) ratio for say, model entropy. That is, how valuable is knowing the model entropy if we were to place a bet on the whether the model is correct? (For ImageNet, let's say that the model is correct if the predicted class is in the Top5.) We will use the script `br.py` to compute the expected odds ratio:
+Now we want to compute the odds (Bayes) ratio for say, model entropy. The odds ratio tells us how much more valuable it is to know the model entropy than just the average accuracy of the model, if we were to place a bet on the whether the model is correct. (For ImageNet, let's say that the model is correct if the predicted class is in the Top5.) We will use the script `br.py` to compute the expected odds ratio:
 ```
 python br.py logs/imagenet/resnet152/eval.pkl --xvar rank --yvar model_entropy
 ```
@@ -24,7 +24,7 @@ X: rank, Y: model_entropy
 E[Bayes ratio, top1] = 13.619
 E[Bayes ratio, top5] = 8.184
 ```
-Here `rank` is the rank of the correct label in the sorted list of the model's softmax probabilities. This script outputs the Bayes ratio for model entropy for both Top1 and  Top5. 
+Here `rank` is the rank of the correct label in the sorted list of the model's softmax probabilities. This script outputs the Bayes ratio for model entropy for both Top1 and  Top5. This result says knowing the model entropy is worth about 8 times more valuable than knowing the model's average accuracy alone. 
 
 To help visualize this a bit better, let's bin our images into 100 equal bins based on model entropy. In each bin, we will count the number of Top1 (green), Top5 (blue), and incorrect (orange) images. We then plot this histogram with `frequency.py`:
 ```
